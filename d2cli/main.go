@@ -12,6 +12,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/davecgh/go-spew/spew"
 	"github.com/playwright-community/playwright-go"
 	"github.com/spf13/pflag"
 	"go.uber.org/multierr"
@@ -285,6 +286,8 @@ func compile(ctx context.Context, ms *xmain.State, plugin d2plugin.Plugin, sketc
 
 	var svg []byte
 	if filepath.Ext(outputPath) == ".pdf" {
+		dict := buildPageMap(diagram, nil, nil)
+		spew.Dump(dict)
 		svg, err = renderPDF(ctx, ms, plugin, sketch, pad, themeID, outputPath, page, ruler, diagram, nil, nil)
 	} else {
 		compileDur := time.Since(start)
@@ -435,6 +438,31 @@ func _render(ctx context.Context, ms *xmain.State, plugin d2plugin.Plugin, sketc
 		return svg, bundleErr
 	}
 	return svg, nil
+}
+
+func buildPageMap(diagram *d2target.Diagram, dictionary map[string]int, path []string) map[string]int {
+	if dictionary == nil {
+		dictionary = map[string]int{}
+	}
+
+	newPath := path
+	if diagram.Name != "" {
+		newPath = append(path, diagram.Name)
+	}
+	key := strings.Join(newPath, ".")
+	dictionary[key] = len(dictionary)
+
+	for _, dl := range diagram.Layers {
+		buildPageMap(dl, dictionary, append(newPath, "layers"))
+	}
+	for _, dl := range diagram.Scenarios {
+		buildPageMap(dl, dictionary, append(newPath, "scenarios"))
+	}
+	for _, dl := range diagram.Steps {
+		buildPageMap(dl, dictionary, append(newPath, "steps"))
+	}
+
+	return dictionary
 }
 
 func renderPDF(ctx context.Context, ms *xmain.State, plugin d2plugin.Plugin, sketch bool, pad, themeID int64, outputPath string, page playwright.Page, ruler *textmeasure.Ruler, diagram *d2target.Diagram, pdf *pdflib.GoFPDF, boardPath []string) (svg []byte, err error) {

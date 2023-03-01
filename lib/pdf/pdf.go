@@ -7,6 +7,7 @@ import (
 
 	"github.com/jung-kurt/gofpdf"
 
+	"oss.terrastruct.com/d2/d2parser"
 	"oss.terrastruct.com/d2/d2renderers/d2fonts"
 	"oss.terrastruct.com/d2/d2target"
 	"oss.terrastruct.com/d2/d2themes"
@@ -124,12 +125,25 @@ func (g *GoFPDF) AddPDFPage(png []byte, boardPath []string, themeID int64, fill 
 
 	// Draw external links
 	for _, shape := range shapes {
-		if shape.Link != "" {
+		if shape.Link == "" {
+			continue
+		}
+
+		_, err := d2parser.ParseKey(shape.Link)
+		// Links can be urls
+		if err != nil {
 			linkX := imageX + float64(shape.Pos.X) - viewboxX - float64(shape.StrokeWidth)
 			linkY := imageY + float64(shape.Pos.Y) - viewboxY - float64(shape.StrokeWidth)
 			linkWidth := float64(shape.Width) + float64(shape.StrokeWidth*2)
 			linkHeight := float64(shape.Height) + float64(shape.StrokeWidth*2)
 			g.pdf.LinkString(linkX, linkY, linkWidth, linkHeight, shape.Link)
+		} else {
+			// find out which page the linkKey links to
+			// spew.Dump(linkKey)
+
+			func resolveBoard(diagram *d2target.Diagram, currPath string) {
+			}
+
 		}
 	}
 
