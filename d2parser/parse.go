@@ -1689,14 +1689,10 @@ func trimCommonIndent(s string) string {
 		if l == "" {
 			continue
 		}
-		lineIndent, l := splitLeadingIndent(l, -1)
+		lineIndent, _ := splitLeadingIndent(l, -1)
 		if lineIndent == "" {
 			// No common indent return as is.
 			return s
-		}
-		if l == "" {
-			// Whitespace only line.
-			continue
 		}
 		if commonIndent == "" || len(lineIndent) < len(commonIndent) {
 			commonIndent = lineIndent
